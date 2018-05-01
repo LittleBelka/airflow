@@ -3,7 +3,6 @@
 airflow-webserver.pid
 airflow.cfg
 airflow.db
-hist/
 logs/
 unittests.cfg
 venv/
