@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import logging
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from pymongo import MongoClient
@@ -31,7 +32,7 @@ class DataHandlingOperator(BaseOperator):
 
 
     def download(self):
-        df = pd.read_csv('data/cancer.csv').set_index('ID')
+        df = pd.read_csv('airflow/data/cancer.csv').set_index('ID')
 
         # Diagnosis: B = 0, M = 1
         df = pd.get_dummies(df)
@@ -58,10 +59,10 @@ class DataHandlingOperator(BaseOperator):
             print('Min and max values in column:')
             print(train[name].min(), ' ', train[name].max())
 
-        print('Correlation with target value')
+        print('Correlation with target value:')
         train.corr().Diagnosis
 
-        print('Correlation with X1 column')
+        print('Correlation with X1 column:')
         train.corr().X1
 
         print('Quantile 1:')

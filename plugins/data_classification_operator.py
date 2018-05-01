@@ -4,6 +4,7 @@ from sklearn.metrics import precision_recall_curve, average_precision_score
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import pandas as pd
+import logging
 
 from airflow.models import BaseOperator
 from airflow.plugins_manager import AirflowPlugin
@@ -71,7 +72,7 @@ class DataClassificationOperator(BaseOperator):
 
     # Copypasted. Need to replace with mongodb usage
     def download(self):
-        df = pd.read_csv('data/cancer.csv').set_index('ID')
+        df = pd.read_csv('airflow/data/cancer.csv').set_index('ID')
 
         # Diagnosis: B = 0, M = 1
         df = pd.get_dummies(df)
