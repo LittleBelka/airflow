@@ -6,3 +6,6 @@ airflow.db
 logs/
 unittests.cfg
 venv/
+dags/__pycache__
+plugins/__pycache__
+
