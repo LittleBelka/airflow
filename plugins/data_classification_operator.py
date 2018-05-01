@@ -69,7 +69,7 @@ class DataClassificationOperator(BaseOperator):
         plt.show()
 
 
-    # Copipasted. Need to replace with mongodb usage
+    # Copypasted. Need to replace with mongodb usage
     def download(self):
         df = pd.read_csv('data/cancer.csv').set_index('ID')
 
