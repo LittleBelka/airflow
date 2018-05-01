@@ -1,0 +1,9 @@
+# Created by .ignore support plugin (hsz.mobi)
+.idea/
+airflow-webserver.pid
+airflow.cfg
+airflow.db
+hist/
+logs/
+unittests.cfg
+venv/
