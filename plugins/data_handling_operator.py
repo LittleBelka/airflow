@@ -50,13 +50,12 @@ class DataHandlingOperator(BaseOperator):
 
         for name in train.columns:
 
-            print('Data type in column:')
-            print(train[name].dtype)
+            print('Data type in column:', train[name].dtype)
 
             print('Build histogram')
             # build_histogram(train[name], name)
 
-            print('Min and max values in column')
+            print('Min and max values in column:')
             print(train[name].min(), ' ', train[name].max())
 
         print('Correlation with target value')
@@ -65,11 +64,11 @@ class DataHandlingOperator(BaseOperator):
         print('Correlation with X1 column')
         train.corr().X1
 
-        print('Quantile 1')
+        print('Quantile 1:')
         train.quantile(.25)
-        print('Quantile 2')
+        print('Quantile 2:')
         train.quantile(.5)
-        print('Quantile 3')
+        print('Quantile 3:')
         train.quantile(.75)
 
 
