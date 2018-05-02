@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import logging
+import json
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from pymongo import MongoClient
@@ -14,8 +15,7 @@ log = logging.getLogger(__name__)
 class DataHandlingOperator(BaseOperator):
 
     @apply_defaults
-    def __init__(self, param, *args, **kwargs):
-        self.operator_param = param
+    def __init__(self, *args, **kwargs):
         super(DataHandlingOperator, self).__init__(*args, **kwargs)
 
 
@@ -24,15 +24,16 @@ class DataHandlingOperator(BaseOperator):
 
         train, test = self.download()
 
-        log.info("Data was splited by train and test. Start to calculate the statistics.")
+        log.info("Data was splitted by train and test. Start to calculate the statistics.")
         self.calculate_statistics(train)
+        # TODO: save statistics to mongodb
 
-        log.info("Save data in database.")
-        self.database_connect()
+        log.info("Save data to the database.")
+        self.insert_data_to_mongodb(train, test)
 
 
     def download(self):
-        df = pd.read_csv('airflow/data/cancer.csv').set_index('ID')
+        df = pd.read_csv('airflow/data/cancer.csv')
 
         # Diagnosis: B = 0, M = 1
         df = pd.get_dummies(df)
@@ -49,28 +50,29 @@ class DataHandlingOperator(BaseOperator):
     def calculate_statistics(self, train):
         print('There are gaps in data: ', self.is_there_gaps_in_data(train))
 
-        for name in train.columns:
+        print('Data type in ID column:', train.ID.dtype)
 
+        for name in train.columns[1:]:
             print('Data type in column:', train[name].dtype)
 
             print('Build histogram')
-            # build_histogram(train[name], name)
+            self.build_histogram(train[name], name)
 
             print('Min and max values in column:')
             print(train[name].min(), ' ', train[name].max())
 
         print('Correlation with target value:')
-        train.corr().Diagnosis
+        train.iloc[:, 1:].corr().Diagnosis
 
         print('Correlation with X1 column:')
-        train.corr().X1
+        train.iloc[:, 1:].corr().X1
 
         print('Quantile 1:')
-        train.quantile(.25)
+        train.iloc[:, 1:].quantile(.25)
         print('Quantile 2:')
-        train.quantile(.5)
+        train.iloc[:, 1:].quantile(.5)
         print('Quantile 3:')
-        train.quantile(.75)
+        train.iloc[:, 1:].quantile(.75)
 
 
     def build_histogram(self, x, title):
@@ -87,10 +89,19 @@ class DataHandlingOperator(BaseOperator):
         return False
 
 
-    def database_connect(self):
+    def insert_data_to_mongodb(self, train, test):
         client = MongoClient()
-        db = client.primer
-        coll = db.dataset
+        db = client.cancer
+
+        if 'train' not in db.collection_names() or db.train.count() == 0:
+            coll = db.train
+            records = json.loads(train.T.to_json()).values()
+            coll.insert_many(records)
+
+        if 'test' not in db.collection_names() or db.test.count() == 0:
+            coll = db.test
+            records = json.loads(test.T.to_json()).values()
+            coll.insert_many(records)
 
 
 class DataHandlingPlugin(AirflowPlugin):

@@ -1,7 +1,7 @@
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, f1_score
 from sklearn.metrics import precision_recall_curve, average_precision_score
-from sklearn.model_selection import train_test_split
+from pymongo import MongoClient
 import matplotlib.pyplot as plt
 import pandas as pd
 import logging
@@ -15,23 +15,20 @@ log = logging.getLogger(__name__)
 class DataClassificationOperator(BaseOperator):
 
     @apply_defaults
-    def __init__(self, param, *args, **kwargs):
-        self.operator_param = param
+    def __init__(self, *args, **kwargs):
         super(DataClassificationOperator, self).__init__(*args, **kwargs)
 
 
     def execute(self, context):
         log.info("Start data classification.")
 
-        # TODO: download train and test dataframes from mongodb
-        train, test = self.download()
-
+        train, test = self.download_data_from_mongodb()
         neigh = KNeighborsClassifier(n_neighbors=3)
         y = train.Diagnosis
-        X = train.drop('Diagnosis', 1)
+        X = train.drop(['Diagnosis', 'ID'], 1)
         neigh.fit(X, y)
 
-        test_x = test.drop('Diagnosis', 1)
+        test_x = test.drop(['Diagnosis', 'ID'], 1)
         test_y = test.Diagnosis
         y_pred = neigh.predict(test_x)
 
@@ -70,20 +67,15 @@ class DataClassificationOperator(BaseOperator):
         plt.show()
 
 
-    # Copypasted. Need to replace with mongodb usage
-    def download(self):
-        df = pd.read_csv('airflow/data/cancer.csv').set_index('ID')
-
-        # Diagnosis: B = 0, M = 1
-        df = pd.get_dummies(df)
-        df = df.drop('Diagnosis_M', 1)
-        df = df.rename(columns={'Diagnosis_B': 'Diagnosis'})
-
-        train, test = train_test_split(df,
-                                       test_size=0.2,
-                                       random_state=213,
-                                       stratify=df.Diagnosis)
-        return train, test
+    def download_data_from_mongodb(self):
+        client = MongoClient()
+        db = client.cancer
+        try:
+            train = pd.DataFrame(list(db.train.find())).drop('_id', 1)
+            test = pd.DataFrame(list(db.test.find())).drop('_id', 1)
+            return train, test
+        except:
+            log.error("Error of data receiving from mongodb")
 
 
 class DataClassificationPlugin(AirflowPlugin):
